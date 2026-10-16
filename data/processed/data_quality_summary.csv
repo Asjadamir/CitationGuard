@@ -1,0 +1,10 @@
+Metric,Value
+Corpus documents,5183
+Train claims,809
+Development claims,300
+Test claims,300
+Duplicate corpus document IDs,0
+Empty corpus abstracts,0
+Missing referenced documents,0
+Train evidence pairs,957
+Development evidence pairs,338

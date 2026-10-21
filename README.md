@@ -22,8 +22,8 @@ https://github.com/allenai/scifact
 
 ## Repository Structure
 
-- `F26-05.ipynb` — Phase 2 EDA + Phase 3 models
-- `F26-05.pdf` — phase report
+- `F26-04.ipynb` — Phase 2 EDA + Phase 3 models
+- `F26-04.pdf` — phase report
 - `data/processed/` — clean model-ready datasets
 - `figures/` — EDA and Phase 3 plots
 - `results/` — Phase 3 metrics and predictions

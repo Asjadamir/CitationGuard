@@ -11,7 +11,7 @@ scientific claim verification and hallucination detection.
 
 ## Current Phase
 
-Dataset Collection, Preprocessing and Exploratory Data Analysis.
+Phase 3 — Model implementation (TF-IDF retrieval + claim–evidence verifier).
 
 ## Dataset
 
@@ -22,11 +22,12 @@ https://github.com/allenai/scifact
 
 ## Repository Structure
 
-- `F26-ID.ipynb` — dataset preparation and EDA
-- `F26-ID.pdf` — phase report
+- `F26-05.ipynb` — Phase 2 EDA + Phase 3 models
+- `F26-05.pdf` — phase report
 - `data/processed/` — clean model-ready datasets
-- `figures/` — EDA visualizations
-- `src/` — reusable project code
+- `figures/` — EDA and Phase 3 plots
+- `results/` — Phase 3 metrics and predictions
+- `src/phase3_pipeline.py` — retrieval + verifier pipeline
 
 ## Project Goal
 

@@ -1,0 +1,6 @@
+rank,score,doc_id,sent_id,is_gold,sentence
+1,0.38933856113697407,2739854,1,False,The fact that they tend not to identify more than a fraction of the specific causal loci has led to divergence of opinion over whether most of the variance is hidden as numerous ra
+2,0.3811393548762198,23389795,1,False,We then discuss the concepts behind the identification of common variants as disease causal factors and contrast them to the basic ideas that underlie the rare variant hypothesis.
+3,0.2945064686078784,14717500,7,True,"In conclusion, uncommon or rare genetic variants can easily create synthetic associations that are credited to common variants, and this possibility requires careful consideration "
+4,0.29013666019608103,23389795,2,False,"The identification of rare variants involves the careful selection of candidate genes to examine, the availability of highly efficient resequencing techniques and the appropriate a"
+5,0.2875230012323057,23389795,3,False,"We believe that this strategy can be successfully applied at present in order to unravel the contribution of rare variants to the multifactorial inheritance of common diseases, whi"

@@ -229,3 +229,6 @@ Thumbs.db
 # Raw dataset can be downloaded reproducibly
 data/raw/*
 !data/raw/.gitkeep
+
+.agents
+skills-lock.json

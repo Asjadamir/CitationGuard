@@ -1,0 +1,79 @@
+{
+  "model": {
+    "type": "tfidf_sentence_retrieval",
+    "vectorizer": "TfidfVectorizer(word 1-2grams, max_features=50000)",
+    "similarity": "cosine",
+    "candidate_pool": "all abstract sentences in SciFact corpus"
+  },
+  "metrics": {
+    "train": {
+      "n_claims_with_evidence": 505,
+      "mean_gold_sentences": 2.0297029702970297,
+      "mrr": 0.42235774230673717,
+      "recall@1": 0.2005005500550055,
+      "hit@1": 0.299009900990099,
+      "recall@3": 0.3492432814710042,
+      "hit@3": 0.47128712871287126,
+      "recall@5": 0.46576379066478085,
+      "hit@5": 0.592079207920792,
+      "recall@10": 0.5758180103724658,
+      "hit@10": 0.6811881188118812
+    },
+    "dev": {
+      "n_claims_with_evidence": 188,
+      "mean_gold_sentences": 1.946808510638298,
+      "mrr": 0.4467836174381834,
+      "recall@1": 0.23958333333333331,
+      "hit@1": 0.3351063829787234,
+      "recall@3": 0.3849734042553192,
+      "hit@3": 0.5,
+      "recall@5": 0.47305597771023294,
+      "hit@5": 0.601063829787234,
+      "recall@10": 0.5544452887537994,
+      "hit@10": 0.6702127659574468
+    }
+  },
+  "demo_claim_id": 3,
+  "demo_top5": [
+    {
+      "rank": 1,
+      "score": 0.38933856113697407,
+      "doc_id": 2739854,
+      "sent_id": 1,
+      "is_gold": false,
+      "sentence": "The fact that they tend not to identify more than a fraction of the specific causal loci has led to divergence of opinion over whether most of the variance is hidden as numerous ra"
+    },
+    {
+      "rank": 2,
+      "score": 0.3811393548762198,
+      "doc_id": 23389795,
+      "sent_id": 1,
+      "is_gold": false,
+      "sentence": "We then discuss the concepts behind the identification of common variants as disease causal factors and contrast them to the basic ideas that underlie the rare variant hypothesis."
+    },
+    {
+      "rank": 3,
+      "score": 0.2945064686078784,
+      "doc_id": 14717500,
+      "sent_id": 7,
+      "is_gold": true,
+      "sentence": "In conclusion, uncommon or rare genetic variants can easily create synthetic associations that are credited to common variants, and this possibility requires careful consideration "
+    },
+    {
+      "rank": 4,
+      "score": 0.29013666019608103,
+      "doc_id": 23389795,
+      "sent_id": 2,
+      "is_gold": false,
+      "sentence": "The identification of rare variants involves the careful selection of candidate genes to examine, the availability of highly efficient resequencing techniques and the appropriate a"
+    },
+    {
+      "rank": 5,
+      "score": 0.2875230012323057,
+      "doc_id": 23389795,
+      "sent_id": 3,
+      "is_gold": false,
+      "sentence": "We believe that this strategy can be successfully applied at present in order to unravel the contribution of rare variants to the multifactorial inheritance of common diseases, whi"
+    }
+  ]
+}

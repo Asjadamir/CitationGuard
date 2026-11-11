@@ -1,10 +1,10 @@
 {
   "phase": 3,
   "project": "CitationGuard",
-  "retrieval_dev_mrr": 0.4467836174381834,
-  "retrieval_dev_recall@5": 0.47305597771023294,
+  "retrieval_dev_mrr": 0.4556749684560465,
+  "retrieval_dev_recall@5": 0.47615881458966564,
   "retrieval_dev_hit@5": 0.601063829787234,
-  "verifier_dev_accuracy": 0.5512820512820513,
-  "verifier_dev_macro_f1": 0.5218112339379785,
+  "verifier_dev_accuracy": 0.5427350427350427,
+  "verifier_dev_macro_f1": 0.5403073760521578,
   "verifier_majority_baseline": 0.46153846153846156
 }

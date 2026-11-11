@@ -57,7 +57,7 @@ Fair data (protocol B) changes the picture:
 - The original Phase 3 verifier drops from 0.52 to 0.41 macro F1, the same as a model that **never sees the evidence**.
 - Every bag-of-words model sits around 0.40–0.42.
 - Only the comparison-feature model separates from the rest, and it is also the best in train CV (it was selected there).
-- McNemar on dev against the original model: 83 vs 34 discordant pairs, **p = 7 × 10⁻⁶**.
+- McNemar on dev against the original model: 83 vs 34 discordant pairs, **p ≈ 0.000007**.
 
 Confusion matrix of the fixed model (rows = true S/C/NE): `[[107, 84, 25], [80, 36, 6], [13, 6, 111]]`. NO_EVIDENCE recall is 0.85. SUPPORT↔CONTRADICT remains the main confusion.
 
@@ -113,3 +113,13 @@ SciFact has no demographic attributes, so we checked for **topic bias** and **sh
 - **Small dev set** (122 CONTRADICT pairs) gives wide CIs (±0.05 macro F1), so we report intervals and significance tests rather than point estimates.
 - **Reproducibility:** tie-breaking in ranking changed results across library versions.
 - **Compute:** no GPU, so neural NLI / dense retrievers were out of scope. They are the natural next step for numeric and comparative reasoning.
+
+## 8. How to run
+
+Requirements: Python 3.10+ and the packages in `requirements.txt`. Everything runs on CPU in about 5 minutes.
+
+1. Clone and install: `git clone https://github.com/Asjadamir/CitationGuard.git`, then `cd CitationGuard` and `pip install -r requirements.txt`.
+2. Get the data: run the first cells of `F26-04.ipynb`. They download SciFact into `data/raw/scifact/` and write the processed CSVs to `data/processed/`. The processed CSVs are already in the repo.
+3. Phase 3 models: `python src/phase3_pipeline.py` writes `results/phase3_*` and `figures/phase3_*`.
+4. Phase 4 evaluation: `python src/phase4_evaluation.py` writes `results/phase4_evaluation.json`, prediction CSVs and `figures/phase4_*`.
+5. Or run everything in one go: open `F26-04.ipynb` from the repo root and choose *Run All*.

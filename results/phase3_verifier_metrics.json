@@ -1,63 +1,64 @@
 {
-  "accuracy": 0.5512820512820513,
-  "macro_f1": 0.5218112339379785,
-  "weighted_f1": 0.5354801314200184,
+  "accuracy": 0.5427350427350427,
+  "macro_f1": 0.5403073760521578,
+  "weighted_f1": 0.5398241039114634,
   "majority_baseline_accuracy": 0.46153846153846156,
   "per_class": {
     "SUPPORT": {
-      "precision": 0.515748031496063,
-      "recall": 0.6064814814814815,
-      "f1-score": 0.5574468085106383,
+      "precision": 0.535,
+      "recall": 0.49537037037037035,
+      "f1-score": 0.5144230769230769,
       "support": 216.0
     },
     "CONTRADICT": {
-      "precision": 0.12643678160919541,
-      "recall": 0.09016393442622951,
-      "f1-score": 0.10526315789473684,
+      "precision": 0.2857142857142857,
+      "recall": 0.29508196721311475,
+      "f1-score": 0.2903225806451613,
       "support": 122.0
     },
     "NO_EVIDENCE": {
-      "precision": 0.9133858267716536,
-      "recall": 0.8923076923076924,
-      "f1-score": 0.9027237354085603,
+      "precision": 0.7816901408450704,
+      "recall": 0.8538461538461538,
+      "f1-score": 0.8161764705882353,
       "support": 130.0
     },
-    "accuracy": 0.5512820512820513,
+    "accuracy": 0.5427350427350427,
     "macro avg": {
-      "precision": 0.5185235466256373,
-      "recall": 0.5296510360718011,
-      "f1-score": 0.5218112339379785,
+      "precision": 0.5341348088531187,
+      "recall": 0.5480994971432129,
+      "f1-score": 0.5403073760521578,
       "support": 468.0
     },
     "weighted avg": {
-      "precision": 0.5247158539311675,
-      "recall": 0.5512820512820513,
-      "f1-score": 0.5354801314200184,
+      "precision": 0.5385403016388932,
+      "recall": 0.5427350427350427,
+      "f1-score": 0.5398241039114634,
       "support": 468.0
     }
   },
   "confusion_matrix": [
     [
-      131,
-      76,
-      9
+      107,
+      84,
+      25
     ],
     [
-      109,
-      11,
-      2
+      80,
+      36,
+      6
     ],
     [
-      14,
-      0,
-      116
+      13,
+      6,
+      111
     ]
   ],
   "train_size": 1312,
   "dev_size": 468,
   "model": {
-    "vectorizer": "TfidfVectorizer(1-2grams, max_features=40000)",
-    "classifier": "LogisticRegression(solver=lbfgs, C=1.0)",
+    "features": "TF-IDF(claim) + TF-IDF(evidence) + TF-IDF(claim-only words) + 8 comparison features",
+    "classifier": "LogisticRegression(solver=lbfgs, C=2.0, class_weight=balanced)",
+    "no_evidence_input": "2 most claim-similar sentences of a non-evidence abstract",
     "labels": [
       "SUPPORT",
       "CONTRADICT",

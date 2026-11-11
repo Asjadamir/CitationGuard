@@ -6,12 +6,21 @@ Two complementary models on Phase 2 / SciFact data:
 2) Claim–evidence verification (TF-IDF + LogisticRegression):
    SUPPORT / CONTRADICT / NO_EVIDENCE
 
+Fixes applied after the Phase 3 review (see README, "Phase 3 fixes"):
+- NO_EVIDENCE examples are the 2 most claim-similar sentences of a cited
+  non-evidence abstract, not the whole abstract (removes a length shortcut).
+- The verifier encodes claim and evidence separately, keeps negation words
+  and adds claim–evidence comparison features, with balanced class weights.
+- Retrieval ranking uses a stable sort, so ties no longer depend on the
+  numpy version.
+
 Run: python src/phase3_pipeline.py
 """
 
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -26,7 +35,9 @@ from sklearn.metrics import (
     f1_score,
 )
 from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import FunctionTransformer, StandardScaler
 
 ROOT = Path(__file__).resolve().parents[1]
 RAW_CORPUS = ROOT / "data" / "raw" / "scifact" / "data" / "corpus.jsonl"
@@ -40,6 +51,31 @@ RESULTS = ROOT / "results"
 
 VERIFIER_LABELS = ["SUPPORT", "CONTRADICT", "NO_EVIDENCE"]
 RECALL_KS = (1, 3, 5, 10)
+NO_EVIDENCE_SENTENCES = 2  # matches the ~2 gold rationale sentences per pair
+
+# Small hand-built lexicons for claim–evidence comparison features.
+NEGATION = {
+    "not", "no", "never", "none", "neither", "nor", "without", "cannot",
+    "fail", "fails", "failed", "lack", "lacks", "absent", "unaffected",
+    "independent", "unrelated", "unchanged", "nonsignificant", "insignificant",
+}
+UP_WORDS = {
+    "increase", "increases", "increased", "increasing", "higher", "high",
+    "more", "greater", "enhance", "enhances", "enhanced", "promote",
+    "promotes", "elevated", "raise", "raises", "improve", "improves",
+    "improved", "upregulates", "upregulated", "activates", "induces",
+}
+DOWN_WORDS = {
+    "decrease", "decreases", "decreased", "decreasing", "lower", "low",
+    "less", "fewer", "reduce", "reduces", "reduced", "inhibit", "inhibits",
+    "inhibited", "suppress", "suppresses", "suppressed", "impair", "impairs",
+    "impaired", "downregulates", "downregulated", "prevents", "blocks",
+}
+TOKEN_RE = re.compile(r"[a-z0-9]+")
+
+
+def tokens(text: str) -> list[str]:
+    return TOKEN_RE.findall(str(text).lower())
 
 
 def load_jsonl(path: Path) -> list[dict]:
@@ -110,7 +146,7 @@ def evaluate_retrieval(
         n_gold.append(len(gold))
         q = vectorizer.transform([claim["claim"]])
         sims = cosine_similarity(q, sentence_matrix).ravel()
-        order = np.argsort(-sims)
+        order = np.argsort(-sims, kind="stable")
 
         rank_of_first = None
         for rank_idx, sent_idx in enumerate(order, start=1):
@@ -173,7 +209,7 @@ def run_retrieval() -> dict:
     demo = demo_claims[0]
     q = vectorizer.transform([demo["claim"]])
     sims = cosine_similarity(q, sentence_matrix).ravel()
-    top = np.argsort(-sims)[:5]
+    top = np.argsort(-sims, kind="stable")[:5]
     gold = gold_evidence_keys(demo)
     demo_rows = []
     for rank, idx in enumerate(top, start=1):
@@ -214,36 +250,112 @@ def run_retrieval() -> dict:
     return out
 
 
+def top_sentences(abstract: list[str], claim: str, vectorizer: TfidfVectorizer, k: int) -> str:
+    """The k abstract sentences most similar to the claim, in abstract order."""
+    sents = [str(x).strip() for x in abstract if str(x).strip()]
+    sims = (vectorizer.transform([claim]) @ vectorizer.transform(sents).T).toarray().ravel()
+    keep = sorted(np.argsort(-sims, kind="stable")[:k])
+    return " ".join(sents[i] for i in keep)
+
+
 def prepare_verifier_frames() -> tuple[pd.DataFrame, pd.DataFrame]:
-    train_v = pd.read_csv(PROCESSED / "verification_train.csv")
-    dev_v = pd.read_csv(PROCESSED / "verification_dev.csv")
-    train_ne = pd.read_csv(PROCESSED / "no_evidence_train.csv")
-    dev_ne = pd.read_csv(PROCESSED / "no_evidence_dev.csv")
+    """claim / evidence / label frames for train and dev.
 
-    train_v = train_v.assign(
-        text=train_v["claim"].fillna("") + " [SEP] " + train_v["evidence_text"].fillna("")
-    )
-    dev_v = dev_v.assign(
-        text=dev_v["claim"].fillna("") + " [SEP] " + dev_v["evidence_text"].fillna("")
-    )
-    train_ne = train_ne.assign(
-        text=train_ne["claim"].fillna("")
-        + " [SEP] "
-        + train_ne["abstract_text"].fillna("")
-    )
-    dev_ne = dev_ne.assign(
-        text=dev_ne["claim"].fillna("") + " [SEP] " + dev_ne["abstract_text"].fillna("")
-    )
+    SUPPORT/CONTRADICT evidence = gold rationale sentences (~2 sentences).
+    NO_EVIDENCE evidence = the 2 most claim-similar sentences of a cited
+    non-evidence abstract. Phase 3 originally used the whole abstract, which
+    let the model detect NO_EVIDENCE from text length alone.
+    """
+    corpus = {int(d["doc_id"]): d["abstract"] for d in load_jsonl(RAW_CORPUS)}
+    sim_vec = TfidfVectorizer(lowercase=True, stop_words="english", sublinear_tf=True)
+    sim_vec.fit([sent for abstract in corpus.values() for sent in abstract])
 
-    train = pd.concat(
-        [train_v[["claim_id", "claim", "text", "label"]], train_ne[["claim_id", "claim", "text", "label"]]],
-        ignore_index=True,
+    frames = []
+    for split in ("train", "dev"):
+        v = pd.read_csv(PROCESSED / f"verification_{split}.csv")
+        ne = pd.read_csv(PROCESSED / f"no_evidence_{split}.csv")
+        v = v.assign(evidence=v["evidence_text"].fillna(""))
+        ne = ne.assign(
+            evidence=[
+                top_sentences(corpus[int(d)], c, sim_vec, NO_EVIDENCE_SENTENCES)
+                for c, d in zip(ne["claim"], ne["doc_id"])
+            ]
+        )
+        cols = ["claim_id", "doc_id", "claim", "evidence", "label"]
+        df = pd.concat([v[cols], ne[cols]], ignore_index=True)
+        frames.append(add_pair_columns(df))
+    return frames[0], frames[1]
+
+
+def add_pair_columns(df: pd.DataFrame) -> pd.DataFrame:
+    df = df.copy()
+    df["claim"] = df["claim"].fillna("")
+    df["evidence"] = df["evidence"].fillna("")
+    df["text"] = df["claim"] + " [SEP] " + df["evidence"]
+    # Claim words that the evidence does not contain (e.g. an added "not").
+    df["claim_only_tokens"] = [
+        " ".join(t for t in tokens(c) if t not in set(tokens(e)))
+        for c, e in zip(df["claim"], df["evidence"])
+    ]
+    return df
+
+
+PAIR_FEATURE_NAMES = [
+    "word_overlap", "log_evidence_len", "claim_negations", "evidence_negations",
+    "negation_mismatch", "claim_up_evidence_down", "claim_down_evidence_up",
+    "claim_numbers_missing",
+]
+
+
+def pair_numeric_features(df: pd.DataFrame) -> np.ndarray:
+    """Claim–evidence comparison: overlap, negation and direction mismatch."""
+    feats = []
+    for claim, evid in zip(df["claim"], df["evidence"]):
+        cs, es = set(tokens(claim)), set(tokens(evid))
+        c_neg, e_neg = len(cs & NEGATION), len(es & NEGATION)
+        c_up, c_down = len(cs & UP_WORDS), len(cs & DOWN_WORDS)
+        e_up, e_down = len(es & UP_WORDS), len(es & DOWN_WORDS)
+        c_nums = {t for t in cs if t.isdigit()}
+        feats.append([
+            len(cs & es) / max(len(cs), 1),
+            np.log1p(len(tokens(evid))),
+            c_neg, e_neg, float((c_neg > 0) != (e_neg > 0)),
+            float(c_up > 0 and e_down > 0), float(c_down > 0 and e_up > 0),
+            len(c_nums - es) / max(len(c_nums), 1),
+        ])
+    return np.array(feats, dtype=float)
+
+
+def _tfidf(**kw) -> TfidfVectorizer:
+    params = dict(lowercase=True, ngram_range=(1, 2), max_features=40000, min_df=2, sublinear_tf=True)
+    params.update(kw)
+    return TfidfVectorizer(**params)
+
+
+def build_verifier() -> Pipeline:
+    """Claim and evidence get separate TF-IDF blocks (stop words kept, since
+    "not"/"no"/"without" carry the label) plus comparison features."""
+    features = ColumnTransformer(
+        [
+            ("claim", _tfidf(), "claim"),
+            ("evidence", _tfidf(), "evidence"),
+            ("claim_only", _tfidf(ngram_range=(1, 1)), "claim_only_tokens"),
+            (
+                "pair",
+                Pipeline([
+                    ("f", FunctionTransformer(
+                        pair_numeric_features,
+                        feature_names_out=lambda *_: np.array(PAIR_FEATURE_NAMES),
+                    )),
+                    ("s", StandardScaler()),
+                ]),
+                ["claim", "evidence"],
+            ),
+        ]
     )
-    dev = pd.concat(
-        [dev_v[["claim_id", "claim", "text", "label"]], dev_ne[["claim_id", "claim", "text", "label"]]],
-        ignore_index=True,
-    )
-    return train, dev
+    # C=2.0 chosen by 5-fold grouped CV on train (C=0.5/1/2/4 -> macro F1 .598/.607/.613/.607)
+    clf = LogisticRegression(max_iter=4000, solver="lbfgs", C=2.0, class_weight="balanced", random_state=42)
+    return Pipeline(steps=[("x", features), ("clf", clf)])
 
 
 def plot_confusion(cm: np.ndarray, labels: list[str], out_path: Path) -> None:
@@ -274,33 +386,10 @@ def run_verifier() -> dict:
     print("Train label counts:\n", train["label"].value_counts().to_string())
     print("Dev label counts:\n", dev["label"].value_counts().to_string())
 
-    model = Pipeline(
-        steps=[
-            (
-                "tfidf",
-                TfidfVectorizer(
-                    lowercase=True,
-                    stop_words="english",
-                    ngram_range=(1, 2),
-                    max_features=40000,
-                    min_df=2,
-                    sublinear_tf=True,
-                ),
-            ),
-            (
-                "clf",
-                LogisticRegression(
-                    max_iter=4000,
-                    solver="lbfgs",
-                    C=1.0,
-                    random_state=42,
-                ),
-            ),
-        ]
-    )
-    model.fit(train["text"], train["label"])
-    pred = model.predict(dev["text"])
-    proba = model.predict_proba(dev["text"])
+    model = build_verifier()
+    model.fit(train, train["label"])
+    pred = model.predict(dev)
+    proba = model.predict_proba(dev)
     class_index = {c: i for i, c in enumerate(model.classes_)}
 
     metrics = {
@@ -323,8 +412,9 @@ def run_verifier() -> dict:
         "train_size": int(len(train)),
         "dev_size": int(len(dev)),
         "model": {
-            "vectorizer": "TfidfVectorizer(1-2grams, max_features=40000)",
-            "classifier": "LogisticRegression(solver=lbfgs, C=1.0)",
+            "features": "TF-IDF(claim) + TF-IDF(evidence) + TF-IDF(claim-only words) + 8 comparison features",
+            "classifier": "LogisticRegression(solver=lbfgs, C=2.0, class_weight=balanced)",
+            "no_evidence_input": f"{NO_EVIDENCE_SENTENCES} most claim-similar sentences of a non-evidence abstract",
             "labels": VERIFIER_LABELS,
         },
     }
@@ -340,7 +430,7 @@ def run_verifier() -> dict:
         )
     )
 
-    pred_df = dev.copy()
+    pred_df = dev.drop(columns=["claim_only_tokens"]).copy()
     pred_df["predicted_label"] = pred
     for label in VERIFIER_LABELS:
         pred_df[f"prob_{label}"] = proba[:, class_index[label]]

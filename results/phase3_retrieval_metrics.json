@@ -9,28 +9,28 @@
     "train": {
       "n_claims_with_evidence": 505,
       "mean_gold_sentences": 2.0297029702970297,
-      "mrr": 0.42235774230673717,
-      "recall@1": 0.2005005500550055,
-      "hit@1": 0.299009900990099,
-      "recall@3": 0.3492432814710042,
-      "hit@3": 0.47128712871287126,
-      "recall@5": 0.46576379066478085,
-      "hit@5": 0.592079207920792,
-      "recall@10": 0.5758180103724658,
-      "hit@10": 0.6811881188118812
+      "mrr": 0.4211007413983036,
+      "recall@1": 0.1995104510451045,
+      "hit@1": 0.297029702970297,
+      "recall@3": 0.3505634134842055,
+      "hit@3": 0.47326732673267324,
+      "recall@5": 0.45710592487820206,
+      "hit@5": 0.5801980198019802,
+      "recall@10": 0.5811645450259312,
+      "hit@10": 0.689108910891089
     },
     "dev": {
       "n_claims_with_evidence": 188,
       "mean_gold_sentences": 1.946808510638298,
-      "mrr": 0.4467836174381834,
-      "recall@1": 0.23958333333333331,
-      "hit@1": 0.3351063829787234,
-      "recall@3": 0.3849734042553192,
-      "hit@3": 0.5,
-      "recall@5": 0.47305597771023294,
+      "mrr": 0.4556749684560465,
+      "recall@1": 0.24756205673758863,
+      "hit@1": 0.34574468085106386,
+      "recall@3": 0.39383865248226946,
+      "hit@3": 0.5106382978723404,
+      "recall@5": 0.47615881458966564,
       "hit@5": 0.601063829787234,
-      "recall@10": 0.5544452887537994,
-      "hit@10": 0.6702127659574468
+      "recall@10": 0.5615374873353596,
+      "hit@10": 0.675531914893617
     }
   },
   "demo_claim_id": 3,
@@ -53,19 +53,19 @@
     },
     {
       "rank": 3,
-      "score": 0.2945064686078784,
-      "doc_id": 14717500,
-      "sent_id": 7,
-      "is_gold": true,
-      "sentence": "In conclusion, uncommon or rare genetic variants can easily create synthetic associations that are credited to common variants, and this possibility requires careful consideration "
-    },
-    {
-      "rank": 4,
       "score": 0.29013666019608103,
       "doc_id": 23389795,
       "sent_id": 2,
       "is_gold": false,
       "sentence": "The identification of rare variants involves the careful selection of candidate genes to examine, the availability of highly efficient resequencing techniques and the appropriate a"
+    },
+    {
+      "rank": 4,
+      "score": 0.28821152459729815,
+      "doc_id": 14717500,
+      "sent_id": 7,
+      "is_gold": true,
+      "sentence": "In conclusion, uncommon or rare genetic variants can easily create synthetic associations that are credited to common variants, and this possibility requires careful consideration "
     },
     {
       "rank": 5,

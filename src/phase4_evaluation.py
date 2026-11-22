@@ -120,8 +120,8 @@ def classification_metrics(y_true, y_pred) -> dict:
 class Corpus:
     """Sentence index plus lookups shared by retrieval and the pipeline."""
 
-    def __init__(self) -> None:
-        self.docs = load_jsonl(RAW_CORPUS)
+    def __init__(self, raw_corpus: Path = RAW_CORPUS) -> None:
+        self.docs = load_jsonl(raw_corpus)
         self.sent_df = build_sentence_index(self.docs)
         self.keys = list(zip(self.sent_df["doc_id"], self.sent_df["sent_id"]))
         self.key_to_idx = {k: i for i, k in enumerate(self.keys)}

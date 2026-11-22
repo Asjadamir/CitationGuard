@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Check scientific claims against SciFact abstract evidence with an experimental local model.">
+  <title>CitationGuard · Check the evidence</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
+  <script src="{{ url_for('static', filename='app.js') }}" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to claim checker</a>
+<header class="site-header">
+  <a class="brand" href="/" aria-label="CitationGuard home"><span class="brand-icon" aria-hidden="true">C✓</span> CitationGuard</a>
+  <span class="local-badge">Local checker</span>
+</header>
+<main id="main">
+  <h1>Check a scientific claim</h1>
+  <section class="checker panel" aria-label="Claim checker">
+    <div id="setup-error" class="notice error" hidden>
+      <p id="setup-message"></p>
+      <button id="retry" type="button" class="secondary">Retry setup</button>
+    </div>
+    <form id="claim-form">
+      <div class="field-heading">
+        <label for="claim">Claim</label>
+        <span id="model-status" role="status" aria-live="polite">Preparing model…</span>
+      </div>
+      <textarea id="claim" name="claim" rows="4" minlength="3" maxlength="2000" required aria-describedby="claim-help count" placeholder="e.g. Vitamin D deficiency is associated with cardiovascular disease."></textarea>
+      <div class="field-help">
+        <span id="claim-help">One claim in English. Searches SciFact abstracts, not the web.</span>
+        <span id="count">0 / 2000</span>
+      </div>
+      <details class="scope">
+        <summary>Options &amp; examples</summary>
+        <div class="examples">
+          <button type="button" data-example="Vitamin D deficiency is associated with cardiovascular disease.">Vitamin D example</button>
+          <button type="button" data-example="Aspirin inhibits platelet aggregation.">Aspirin example</button>
+        </div>
+        <label for="doc-id">Cited SciFact document ID <span class="optional">(optional)</span></label>
+        <input id="doc-id" name="doc_id" type="text" inputmode="numeric" pattern="[0-9]{1,10}" maxlength="10" placeholder="e.g. 4983" aria-describedby="doc-help">
+        <p id="doc-help" class="muted">Leave blank to search all papers. SciFact IDs only, not DOIs or URLs.</p>
+      </details>
+      <div class="form-actions">
+        <button id="verify" type="submit" disabled>Check evidence <span aria-hidden="true">→</span></button>
+        <button id="clear" type="button" class="secondary">Clear</button>
+      </div>
+    </form>
+    <p id="progress" role="status" aria-live="polite"></p>
+    <p id="form-error" class="notice error" role="alert" hidden></p>
+    <noscript><p class="notice error">Enable JavaScript to use the checker. The JSON API is documented in README.md.</p></noscript>
+  </section>
+  <aside class="limitation">Experimental model; judgments can be wrong. Not medical advice. “Insufficient evidence” does not mean false.</aside>
+  <section id="results" class="results" aria-labelledby="result-heading" tabindex="-1" hidden>
+    <div class="panel verdict-panel">
+      <div class="result-heading">
+        <h2 id="result-heading"></h2>
+        <button id="download" class="secondary" type="button" aria-label="Download report as JSON">Download report</button>
+      </div>
+      <blockquote id="checked-claim"></blockquote>
+      <p id="result-explanation"></p>
+      <p id="searched-scope" class="muted"></p>
+      <details id="scores">
+        <summary>Scores &amp; method</summary>
+        <div id="score-values"></div>
+        <p class="muted">Uncalibrated model outputs, not probabilities of truth. A verdict requires an evidence score of at least 0.76. The model judges the top two sentences together; retrieval scores measure relevance, not support.</p>
+      </details>
+    </div>
+    <h2 class="evidence-heading">Evidence</h2>
+    <div id="evidence-list"></div>
+    <details id="additional-evidence" hidden>
+      <summary>More related sentences</summary>
+      <div id="context-list"></div>
+    </details>
+    <p id="empty-results" class="panel muted" hidden>No matching sentences. Try different terms or search all papers.</p>
+    <details class="panel provenance">
+      <summary>Provenance &amp; limitations</summary>
+      <pre id="model-details"></pre>
+      <ul id="limitations"></ul>
+    </details>
+  </section>
+</main>
+<footer><a href="https://github.com/allenai/scifact" target="_blank" rel="noopener noreferrer">SciFact dataset ↗</a></footer>
+</body>
+</html>

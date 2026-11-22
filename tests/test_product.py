@@ -8,7 +8,23 @@ import numpy as np
 import pytest
 
 from phase4_evaluation import BM25Retriever
-from product import InputError, load_verifier, strict_verdict, validate_input
+from phase3_pipeline import ROOT
+from product import InputError, load_verifier, strict_verdict, text_digest, validate_input
+
+# SHA-256 of the committed (LF) training CSV blobs, from `git cat-file blob`.
+COMMITTED_TRAINING_SHA256 = "646847fe52d60a93b1e7e09df020b6471c6c07a41288e84700951ebd444d0679"
+
+
+def test_text_digest_ignores_line_endings(tmp_path):
+    (tmp_path / "lf.csv").write_bytes(b"a,b\n1,2\n")
+    (tmp_path / "crlf.csv").write_bytes(b"a,b\r\n1,2\r\n")
+    assert text_digest([tmp_path / "lf.csv"]) == text_digest([tmp_path / "crlf.csv"])
+    assert text_digest([tmp_path / "lf.csv"]) != text_digest([tmp_path / "lf.csv", tmp_path / "lf.csv"])
+
+
+def test_training_digest_matches_committed_data_on_any_checkout():
+    files = [ROOT / "data/processed" / name for name in ("verification_train.csv", "no_evidence_train.csv")]
+    assert text_digest(files) == COMMITTED_TRAINING_SHA256
 
 
 @pytest.mark.parametrize("payload", [None, [], {}, {"claim": " "}, {"claim": 42}, {"claim": "xx"}, {"claim": "x" * 2001}, {"claim": "!!!"}])

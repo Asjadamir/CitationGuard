@@ -27,25 +27,25 @@ strict threshold=0.76. These are retained, not retuned on dev.
 
 ## Bounded implementation checklist
 
-- [ ] Reproducible, integrity-checked raw SciFact setup without notebook execution;
+- [x] Reproducible, integrity-checked raw SciFact setup without notebook execution;
       explicit offline/missing/corrupt data failures, no synthetic data fallback.
-- [ ] Reuse the actual train-only comparison-feature verifier and hybrid BM25
+- [x] Reuse the actual train-only comparison-feature verifier and hybrid BM25
       retriever in an interactive local application (not precomputed predictions).
-- [ ] Claim -> ranked real sentences -> top-two evidence -> three-way model
+- [x] Claim -> ranked real sentences -> top-two evidence -> three-way model
       scores -> strict abstention. Zero lexical matches must not produce a verdict.
-- [ ] Optional restriction to a SciFact document ID for checking a cited paper;
+- [x] Optional restriction to a SciFact document ID for checking a cited paper;
       no invented DOI, URL, bibliographic metadata, or unsupported external lookup.
-- [ ] Display exact sentence text, original zero-based sentence ID, SciFact
+- [x] Display exact sentence text, original zero-based sentence ID, SciFact
       document ID, paper title, retrieval score and which sentences the verifier
       used. Related text is not automatically supporting evidence.
-- [ ] Usable responsive keyboard-accessible UI: instructions, examples, input
+- [x] Usable responsive keyboard-accessible UI: instructions, examples, input
       validation, startup/loading/empty/error/retry states; clear model limitations
       and no implication that NO_EVIDENCE means a claim is false.
-- [ ] Behavioral tests with independent oracles for retrieval/provenance,
+- [x] Behavioral tests with independent oracles for retrieval/provenance,
       thresholding, API validation, real training/inference and failure paths.
-- [ ] Automated checks and bounded real browser checks via chrome-devtools-axi;
+- [x] Automated checks and bounded real browser checks (Playwright, scripts/browser_e2e.py);
       record observed results separately from old research metrics.
-- [ ] Local setup/configuration/test documentation, capabilities/limitations and
+- [x] Local setup/configuration/test documentation, capabilities/limitations and
       future hosting prerequisites. No deployment or infrastructure changes.
 
 Non-goals: internet-wide science search, PDF uploads/OCR, neural model research,
@@ -73,13 +73,28 @@ Validation so far (Python 3.12.16; no mocked classifier in integration tests):
 - Real local server on loopback port 8765 returned `/api/status` state `ready`,
   5,183 documents, 45,952 sentences, 1,312 training rows; scikit-learn 1.6.1.
   Corpus digest `b8d6c89624cb2ed74dee8938effc4f5d8bd2086887880af8110d64be4ceade62`;
-  training digest `646847fe52d60a93b1e7e09df020b6471c6c07a41288e84700951ebd444d0679`.
+  training digest `646847fe52d60a93b1e7e09df020b6471c6c07a41288e84700951ebd444d0679`
+  (line endings normalized since Phase 5, so Windows checkouts report the same value).
 
-**Browser verification incomplete / tooling blocker:** a named isolated
-`chrome-devtools-axi` session opened `about:blank` using the installed Brave
-binary. Running `scripts/browser_checks.js` then failed with MCP request timeout;
-following the tool's diagnostic suggestion reported `BRIDGE_NOT_READY` and a
-CDP target that had gone away. No UI-flow success is claimed. Browser/session
-cleanup was requested. Browser behavior, responsive layout, accessibility and
-export remain to be verified before completion. Historical Phase 4 scores are
-context, not a new accuracy evaluation. No deployment or PR has been made.
+**Earlier browser blocker (superseded):** the first attempt with
+`chrome-devtools-axi` timed out (`BRIDGE_NOT_READY`), so the `scripts/browser_*.js`
+checks never ran. Phase 5 ports all of them, plus export, keyboard and mobile
+checks, to `scripts/browser_e2e.py` (Playwright).
+
+## Phase 5 verification (2026-11-22, Windows 11, CPython 3.12.11, CPU)
+
+- `python scripts/setup_data.py` downloaded and verified the pinned archive.
+- `python -m pytest -q`: **44 passed**, 0 skipped (adds line-ending-independent
+  training digest tests). `ruff check .` and `node --check src/static/app.js`: clean.
+- `python scripts/browser_e2e.py --url http://127.0.0.1:8765 --channel chrome`:
+  **18/18 checks passed** in headless Chrome against the real model. Covered:
+  official dev claims 53 (support, gold paper 45638119 cited), 249 (contradiction)
+  and 1 (abstains); unknown vocabulary (no invented evidence); unknown document
+  ID error clears stale results; document-restricted search; JSON download equals
+  the displayed result; Clear/example buttons; keyboard-only submission; result
+  focus; no horizontal scroll at 375 px. Screenshots: `figures/phase5_app_*.png`.
+- `python src/phase5_analysis.py`: the product inference path reproduces the
+  Phase 4 strict pipeline on all 300 dev claims (identical labels 300/300;
+  macro F1 0.301, strict accuracy 0.387, hallucinated 0.134, coverage 0.22).
+  Mean check latency 41 ms (p95 72 ms); startup ~21 s.
+- Analysis and report: `reports/phase5_report.{md,pdf}`. No deployment was made.

@@ -3,3 +3,4 @@
 datasets
 requests
 jupyter
+reportlab==5.1.0    # reports/build_pdf.py

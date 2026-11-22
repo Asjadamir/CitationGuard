@@ -1,6 +1,6 @@
-"""Render reports/phase4_report.md to PDF with ReportLab.
+"""Render a phase report (reports/phaseN_report.md) to PDF with ReportLab.
 
-Run from the repo root: python reports/build_pdf.py
+Run from the repo root: python reports/build_pdf.py [phase]   (default: 4)
 Handles the Markdown subset used in the report: headings, paragraphs,
 bullet / numbered lists, pipe tables, **bold**, *italic* and `code`.
 """
@@ -8,6 +8,7 @@ bullet / numbered lists, pipe tables, **bold**, *italic* and `code`.
 from __future__ import annotations
 
 import re
+import sys
 from pathlib import Path
 
 from reportlab.lib import colors
@@ -27,15 +28,33 @@ from reportlab.platypus import (
 )
 
 ROOT = Path(__file__).resolve().parents[1]
-SRC = ROOT / "reports" / "phase4_report.md"
-OUT = ROOT / "reports" / "phase4_report.pdf"
 ACCENT = colors.HexColor("#2F6F8F")
 
-# Figures inserted after the section whose heading starts with the key.
-FIGURES = {
-    "3.1": ("phase4_retrieval_comparison.png", 13.5),
-    "3.3": ("phase4_pipeline_comparison.png", 15.0),
+# Per phase: figures inserted after the section whose heading starts with the
+# key, as (file, width in cm, optional caption).
+PHASES = {
+    "4": {
+        "title": "CitationGuard — Phase 4: Evaluation and Analysis",
+        "figures": {
+            "3.1": ("phase4_retrieval_comparison.png", 13.5, None),
+            "3.3": ("phase4_pipeline_comparison.png", 15.0, None),
+        },
+    },
+    "5": {
+        "title": "CitationGuard — Phase 5: Final Output and Analysis",
+        "figures": {
+            "1.": ("phase5_app_screens.png", 15.5,
+                   "Figure 1. The local app on real model output: desktop and phone width (screenshots from scripts/browser_e2e.py)."),
+            "3.": ("phase5_error_and_selective.png", 17.5,
+                   "Figure 2. Left: outcome of every dev claim. Middle: risk–coverage curve of the evidence score. "
+                   "Right: reliability diagram of the evidence score (ECE 0.15)."),
+        },
+    },
 }
+PHASE = sys.argv[1] if len(sys.argv) > 1 else "4"
+SRC = ROOT / "reports" / f"phase{PHASE}_report.md"
+OUT = ROOT / "reports" / f"phase{PHASE}_report.pdf"
+FIGURES = PHASES[PHASE]["figures"]
 
 base = getSampleStyleSheet()
 STYLES = {
@@ -87,18 +106,22 @@ def bullet_list(items: list[str], numbered: bool):
     return ListFlowable(flow, leftIndent=12, **kw)
 
 
-def figure(name: str, width_cm: float):
+def figure(name: str, width_cm: float, caption: str | None = None) -> list:
     path = ROOT / "figures" / name
     img = Image(str(path))
     scale = width_cm * cm / img.imageWidth
     img.drawWidth, img.drawHeight = img.imageWidth * scale, img.imageHeight * scale
-    return img
+    out = [img]
+    if caption:
+        out.append(Paragraph(f"<i>{inline(caption)}</i>", STYLES["cell"]))
+        out.append(Spacer(1, 4))
+    return out
 
 
 def build() -> None:
     doc = SimpleDocTemplate(str(OUT), pagesize=A4, leftMargin=1.6 * cm, rightMargin=1.6 * cm,
                             topMargin=1.4 * cm, bottomMargin=1.4 * cm,
-                            title="CitationGuard — Phase 4: Evaluation and Analysis", author="CitationGuard team")
+                            title=PHASES[PHASE]["title"], author="CitationGuard team")
     width = doc.width
     story = []
     lines = SRC.read_text(encoding="utf-8").splitlines()
@@ -113,7 +136,7 @@ def build() -> None:
             story.append(Paragraph(inline(ln[2:]), STYLES["title"]))
         elif ln.startswith("## ") or ln.startswith("### "):
             if pending_fig:
-                story.append(figure(*pending_fig))
+                story += figure(*pending_fig)
                 pending_fig = None
             level = "h2" if ln.startswith("## ") else "h3"
             heading = ln.lstrip("#").strip()
@@ -151,12 +174,12 @@ def build() -> None:
             continue
         i += 1
     if pending_fig:
-        story.append(figure(*pending_fig))
+        story += figure(*pending_fig)
 
     def footer(canvas, doc_):
         canvas.setFont("Helvetica", 7.5)
         canvas.setFillColor(colors.grey)
-        canvas.drawRightString(A4[0] - 1.6 * cm, 0.8 * cm, f"CitationGuard · Phase 4 · page {doc_.page}")
+        canvas.drawRightString(A4[0] - 1.6 * cm, 0.8 * cm, f"CitationGuard · Phase {PHASE} · page {doc_.page}")
 
     doc.build(story, onFirstPage=footer, onLaterPages=footer)
     print(f"Wrote {OUT}")

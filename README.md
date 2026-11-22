@@ -123,6 +123,15 @@ SciFact the integration tests explicitly skip; that is not full validation.
 CI downloads the checksum-pinned data and runs both suites. Browser evidence
 and the bounded requirements checklist are recorded in [docs/PRODUCT.md](docs/PRODUCT.md).
 
+Real-browser end-to-end checks (18 assertions against official SciFact dev
+labels; also writes the report screenshots to `figures/phase5_app_*.png`):
+
+```bash
+python -m playwright install chromium    # or use --channel chrome / msedge
+python src/app.py --port 8765            # terminal 1
+python scripts/browser_e2e.py --url http://127.0.0.1:8765   # terminal 2
+```
+
 ## JSON API
 
 ```bash
@@ -143,15 +152,22 @@ threshold, model/data digests, timestamp and limitations. Invalid inputs return
 ## Research context and structure
 
 The project goal is to investigate whether scientific claims are actually
-supported by cited evidence. The original README's current phase was
-**Phase 4 — Evaluation and analysis**. The next phase adds an interactive local
-product around that working CPU stack, preserving the notebook and reports.
+supported by cited evidence. Current phase: **Phase 5 — Final output and
+analysis**: the interactive local product above, plus the technical report
+[reports/phase5_report.pdf](reports/phase5_report.pdf) (results, error
+analysis, theoretical insights and reproducibility evidence). Phase 5 shows
+the shipped app reproduces the Phase 4 research numbers claim-for-claim
+(300/300 dev labels), evaluates the new cited-paper mode, and decomposes errors.
 The older Phase 3 PDF predates the fixes below; Phase 4 and its code supersede it.
 
 - `src/product.py`, `src/app.py`, `src/templates/`, `src/static/`: inference/UI.
 - `scripts/setup_data.py`: public dataset installation, no notebook required.
 - `src/phase3_pipeline.py`: original retrieval/verifier and training helpers.
 - `src/phase4_evaluation.py`: BM25/hybrid classes and research evaluation.
+- `src/phase5_analysis.py`: evaluates the product inference path on dev
+  (consistency, cited-paper mode, error decomposition, risk–coverage, calibration).
+- `scripts/browser_e2e.py`: Playwright real-browser checks and screenshots.
+- `reports/phase5_report.{md,pdf}`: Phase 5 technical report.
 - `F26-04.ipynb`: data exploration, Phase 3 models and Phase 4 evaluation.
 - `F26-04.pdf`, `reports/phase4_report.{md,pdf}`: supplied project reports.
 - `data/processed/`: supplied clean training/dev CSVs; raw data is untracked.
@@ -170,6 +186,8 @@ To reproduce the old experiments (writes `results/` and `figures/`):
 python -m pip install -r requirements-research.txt  # only needed for notebook tools
 python src/phase3_pipeline.py
 python src/phase4_evaluation.py
+python src/phase5_analysis.py     # ~1 min; results/phase5_* and figures/phase5_error_and_selective.png
+python reports/build_pdf.py 5     # rebuild reports/phase5_report.pdf (needs reportlab)
 ```
 
 ## Hosting later — not deployed

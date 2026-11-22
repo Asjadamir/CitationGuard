@@ -6,6 +6,8 @@ This file is the project's committed home for project-intrinsic agent knowledge:
 - Run the app with `python src/app.py`; test imports use `src/` on the Python path (`pyproject.toml`). Research scripts retain their direct-file entry points.
 - Raw SciFact is intentionally untracked. Install with `python scripts/setup_data.py`; preserve original sentence boundaries/zero-based IDs. Missing data is an explicit error, never a synthetic fallback.
 - Reuse the Phase 3 comparison-feature verifier and Phase 4 hybrid retrieval. Product training must use train CSVs only; supplied historical metrics are not proof of new accuracy. Threshold/model limitations are explained in `README.md`.
+- Keep τ = 0.76 a constant: re-running Phase 4's train-CV selection under numpy 2 yields 0.74 (unstable `GroupKFold` tie order; see `reports/phase5_report.md` §5.1). Do not overwrite committed Phase 4 results.
+- Browser checks: `scripts/browser_e2e.py` (Playwright) against a running app; it rewrites `figures/phase5_app_*.png`.
 
 ## Maintaining this file
 

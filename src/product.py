@@ -106,6 +106,15 @@ class ClaimVerifier:
         }
 
 
+def text_digest(paths) -> str:
+    """SHA-256 of text files with CRLF normalized to LF, so the provenance
+    digest is identical on Windows (git autocrlf) and Linux/macOS checkouts."""
+    digest = hashlib.sha256()
+    for path in paths:
+        digest.update(Path(path).read_bytes().replace(b"\r\n", b"\n"))
+    return digest.hexdigest()
+
+
 def load_verifier(data_dir: Path) -> ClaimVerifier:
     raw_corpus = data_dir / "corpus.jsonl"
     try:
@@ -124,14 +133,12 @@ def load_verifier(data_dir: Path) -> ClaimVerifier:
     # Never load development labels to train the interactive model.
     (train,) = prepare_verifier_frames(splits=("train",), raw_corpus=raw_corpus)
     model = build_verifier().fit(train, train["label"])
-    training_digest = hashlib.sha256()
-    for name in ("verification_train.csv", "no_evidence_train.csv"):
-        training_digest.update((ROOT / "data/processed" / name).read_bytes())
+    training_digest = text_digest(ROOT / "data/processed" / name for name in ("verification_train.csv", "no_evidence_train.csv"))
     metadata = {
         "name": "Phase 3 comparison-feature logistic regression + Phase 4 hybrid BM25",
         "version": "citationguard-local-v1",
         "corpus_sha256": digest,
-        "training_sha256": training_digest.hexdigest(),
+        "training_sha256": training_digest,
         "training_rows": len(train),
         "documents": len(corpus.docs),
         "sentences": len(corpus.sent_df),

@@ -258,7 +258,10 @@ def top_sentences(abstract: list[str], claim: str, vectorizer: TfidfVectorizer, 
     return " ".join(sents[i] for i in keep)
 
 
-def prepare_verifier_frames() -> tuple[pd.DataFrame, pd.DataFrame]:
+def prepare_verifier_frames(
+    splits: tuple[str, ...] = ("train", "dev"),
+    raw_corpus: Path = RAW_CORPUS,
+) -> tuple[pd.DataFrame, ...]:
     """claim / evidence / label frames for train and dev.
 
     SUPPORT/CONTRADICT evidence = gold rationale sentences (~2 sentences).
@@ -266,12 +269,12 @@ def prepare_verifier_frames() -> tuple[pd.DataFrame, pd.DataFrame]:
     non-evidence abstract. Phase 3 originally used the whole abstract, which
     let the model detect NO_EVIDENCE from text length alone.
     """
-    corpus = {int(d["doc_id"]): d["abstract"] for d in load_jsonl(RAW_CORPUS)}
+    corpus = {int(d["doc_id"]): d["abstract"] for d in load_jsonl(raw_corpus)}
     sim_vec = TfidfVectorizer(lowercase=True, stop_words="english", sublinear_tf=True)
     sim_vec.fit([sent for abstract in corpus.values() for sent in abstract])
 
     frames = []
-    for split in ("train", "dev"):
+    for split in splits:
         v = pd.read_csv(PROCESSED / f"verification_{split}.csv")
         ne = pd.read_csv(PROCESSED / f"no_evidence_{split}.csv")
         v = v.assign(evidence=v["evidence_text"].fillna(""))
@@ -284,7 +287,7 @@ def prepare_verifier_frames() -> tuple[pd.DataFrame, pd.DataFrame]:
         cols = ["claim_id", "doc_id", "claim", "evidence", "label"]
         df = pd.concat([v[cols], ne[cols]], ignore_index=True)
         frames.append(add_pair_columns(df))
-    return frames[0], frames[1]
+    return tuple(frames)
 
 
 def add_pair_columns(df: pd.DataFrame) -> pd.DataFrame:

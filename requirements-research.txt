@@ -1,0 +1,6 @@
+-r requirements.txt
+# Optional: original notebook acquisition and exploration tools.
+datasets
+requests
+jupyter
+reportlab==5.1.0    # reports/build_pdf.py
